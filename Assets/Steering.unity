@@ -197,9 +197,9 @@ GameObject:
   - component: {fileID: 232433732}
   - component: {fileID: 232433731}
   - component: {fileID: 232433730}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: HidingPlace
-  m_TagString: hide
+  m_TagString: HideObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -320,17 +320,21 @@ PrefabInstance:
       propertyPath: initialState
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6420589502170070361, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
+      propertyPath: hideObstacleMask.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 7423567203501390115, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 16.150305
+      value: -2.84
       objectReference: {fileID: 0}
     - target: {fileID: 7423567203501390115, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.7
+      value: -0.29
       objectReference: {fileID: 0}
     - target: {fileID: 7423567203501390115, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 16.22
+      value: 9.14
       objectReference: {fileID: 0}
     - target: {fileID: 7423567203501390115, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
       propertyPath: m_LocalRotation.w
@@ -367,7 +371,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7438494788967298231, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1256712995}
   m_SourcePrefab: {fileID: 100100000, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
 --- !u!4 &396088619 stripped
 Transform:
@@ -452,9 +459,9 @@ GameObject:
   - component: {fileID: 933853549}
   - component: {fileID: 933853548}
   - component: {fileID: 933853547}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cube (3)
-  m_TagString: hide
+  m_TagString: HideObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -688,6 +695,32 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &1256712991 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7438494788967298231, guid: b79d0b13355dc8f44b7956db61a82656, type: 3}
+  m_PrefabInstance: {fileID: 396088618}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1256712995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256712991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcc3777ef11c6a24a951bc341636a158, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RobberDebugView
+  drawAgentPath: 1
+  pointSize: 0.2
+  drawWanderGizmos: 1
+  drawPursueGizmos: 1
+  drawTargetVelocity: 1
+  drawEvadeGizmos: 1
+  drawHideGizmos: 1
+  drawComplexGizmos: 1
+  drawComplexRanges: 1
 --- !u!1 &1257355831
 GameObject:
   m_ObjectHideFlags: 0
@@ -857,9 +890,9 @@ GameObject:
   - component: {fileID: 1575707762}
   - component: {fileID: 1575707761}
   - component: {fileID: 1575707760}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: HidingPlace
-  m_TagString: hide
+  m_TagString: HideObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1095,9 +1128,9 @@ GameObject:
   - component: {fileID: 1818977517}
   - component: {fileID: 1818977516}
   - component: {fileID: 1818977515}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: HidingPlace
-  m_TagString: hide
+  m_TagString: HideObstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -25,6 +25,15 @@ public class RobberBrain : MonoBehaviour
     [Header("Target Tracking")]
     [SerializeField, Min(0f)] private float trackedTargetVelocitySmoothing = 12f;
 
+    [Header("Perception Settings")]
+    [SerializeField] private LayerMask visionObstacleMask;
+    [SerializeField, Min(0.1f)] private float robberViewDistance = 12f;
+    [SerializeField, Range(1f, 360f)] private float robberViewAngle = 120f;
+    [SerializeField, Min(0f)] private float robberEyeHeightFallback = 1.2f;
+    [SerializeField, Min(0.1f)] private float targetViewDistance = 12f;
+    [SerializeField, Range(1f, 360f)] private float targetViewAngle = 90f;
+    [SerializeField, Min(0f)] private float targetEyeHeight = 1.2f;
+
     [Header("Wander Settings")]
     [SerializeField, Min(0.1f)] private float wanderDistance = 4f;
     [SerializeField, Min(0.1f)] private float wanderRadius = 2f;
@@ -70,6 +79,13 @@ public class RobberBrain : MonoBehaviour
     [SerializeField, Min(0f)] private float hideThreatEyeHeight = 1.2f;
     [SerializeField, Min(0f)] private float hideVisionProbeHeight = 1.0f;
 
+    [Header("Complex Settings")]
+    [SerializeField, Min(0.1f)] private float complexEnterRange = 10f;
+    [SerializeField, Min(0.1f)] private float complexExitRange = 12f;
+    [SerializeField, Min(0f)] private float complexPanicMemoryTime = 2f;
+    [SerializeField, Min(0f)] private float complexMinSubStateDuration = 0.5f;
+    [SerializeField] private bool complexPreferHideOverEvade = true;
+
     [Header("Runtime Debug")]
     [SerializeField] private string currentStateName;
     [SerializeField] private Vector3 trackedTargetVelocity;
@@ -103,6 +119,13 @@ public class RobberBrain : MonoBehaviour
     [SerializeField] private Vector3 debugHideSampledDestination;
     [SerializeField] private bool debugHideHasValidDestination;
 
+    [Header("Complex Debug")]
+    [SerializeField] private bool debugComplexCanSeeTarget;
+    [SerializeField] private bool debugComplexCanTargetSeeMe;
+    [SerializeField] private bool debugComplexIsTargetInRange;
+    [SerializeField] private string debugComplexSubStateName;
+    [SerializeField] private float debugComplexDefensiveLockTimer;
+
     private StateMachine stateMachine;
     private Vector3 lastTargetPosition;
 
@@ -110,6 +133,14 @@ public class RobberBrain : MonoBehaviour
     public Transform EyesPoint => eyesPoint;
     public NavMeshAgent Agent => agent;
     public StateMachine StateMachine => stateMachine;
+
+    public LayerMask VisionObstacleMask => visionObstacleMask;
+    public float RobberViewDistance => robberViewDistance;
+    public float RobberViewAngle => robberViewAngle;
+    public float RobberEyeHeightFallback => robberEyeHeightFallback;
+    public float TargetViewDistance => targetViewDistance;
+    public float TargetViewAngle => targetViewAngle;
+    public float TargetEyeHeight => targetEyeHeight;
 
     public float WanderDistance => wanderDistance;
     public float WanderRadius => wanderRadius;
@@ -152,6 +183,12 @@ public class RobberBrain : MonoBehaviour
     public float HideThreatEyeHeight => hideThreatEyeHeight;
     public float HideVisionProbeHeight => hideVisionProbeHeight;
 
+    public float ComplexEnterRange => complexEnterRange;
+    public float ComplexExitRange => complexExitRange;
+    public float ComplexPanicMemoryTime => complexPanicMemoryTime;
+    public float ComplexMinSubStateDuration => complexMinSubStateDuration;
+    public bool ComplexPreferHideOverEvade => complexPreferHideOverEvade;
+
     public string CurrentStateName => currentStateName;
     public Vector3 TargetVelocity => trackedTargetVelocity;
 
@@ -179,6 +216,12 @@ public class RobberBrain : MonoBehaviour
     public Vector3 DebugHideRawDestination => debugHideRawDestination;
     public Vector3 DebugHideSampledDestination => debugHideSampledDestination;
     public bool DebugHideHasValidDestination => debugHideHasValidDestination;
+
+    public bool DebugComplexCanSeeTarget => debugComplexCanSeeTarget;
+    public bool DebugComplexCanTargetSeeMe => debugComplexCanTargetSeeMe;
+    public bool DebugComplexIsTargetInRange => debugComplexIsTargetInRange;
+    public string DebugComplexSubStateName => debugComplexSubStateName;
+    public float DebugComplexDefensiveLockTimer => debugComplexDefensiveLockTimer;
 
     public RobberWanderState WanderState { get; private set; }
     public RobberPursueState PursueState { get; private set; }
@@ -314,6 +357,102 @@ public class RobberBrain : MonoBehaviour
         hideObstacleColliders = results.ToArray();
     }
 
+    public Vector3 GetRobberEyePosition()
+    {
+        if (eyesPoint != null)
+            return eyesPoint.position;
+
+        return transform.position + Vector3.up * robberEyeHeightFallback;
+    }
+
+    public Vector3 GetTargetEyePosition()
+    {
+        if (target == null)
+            return Vector3.zero;
+
+        return target.position + Vector3.up * targetEyeHeight;
+    }
+
+    public float DistanceToTargetXZ()
+    {
+        if (target == null)
+            return float.MaxValue;
+
+        Vector3 from = transform.position;
+        Vector3 to = target.position;
+        from.y = 0f;
+        to.y = 0f;
+
+        return Vector3.Distance(from, to);
+    }
+
+    public bool IsTargetInRange()
+    {
+        return DistanceToTargetXZ() <= complexEnterRange;
+    }
+
+    public bool CanSeeTarget()
+    {
+        if (target == null)
+            return false;
+
+        Vector3 from = GetRobberEyePosition();
+        Vector3 to = GetTargetEyePosition();
+
+        Vector3 flatForward = transform.forward;
+        flatForward.y = 0f;
+        if (flatForward.sqrMagnitude < 0.0001f)
+            flatForward = Vector3.forward;
+        flatForward.Normalize();
+
+        Vector3 flatDirectionToTarget = to - from;
+        flatDirectionToTarget.y = 0f;
+
+        float distance = flatDirectionToTarget.magnitude;
+        if (distance > robberViewDistance)
+            return false;
+
+        if (distance > 0.0001f)
+        {
+            float angle = Vector3.Angle(flatForward, flatDirectionToTarget.normalized);
+            if (angle > robberViewAngle * 0.5f)
+                return false;
+        }
+
+        return !Physics.Linecast(from, to, visionObstacleMask, QueryTriggerInteraction.Ignore);
+    }
+
+    public bool CanTargetSeeMe()
+    {
+        if (target == null)
+            return false;
+
+        Vector3 from = GetTargetEyePosition();
+        Vector3 to = GetRobberEyePosition();
+
+        Vector3 flatForward = target.forward;
+        flatForward.y = 0f;
+        if (flatForward.sqrMagnitude < 0.0001f)
+            flatForward = Vector3.forward;
+        flatForward.Normalize();
+
+        Vector3 flatDirectionToMe = to - from;
+        flatDirectionToMe.y = 0f;
+
+        float distance = flatDirectionToMe.magnitude;
+        if (distance > targetViewDistance)
+            return false;
+
+        if (distance > 0.0001f)
+        {
+            float angle = Vector3.Angle(flatForward, flatDirectionToMe.normalized);
+            if (angle > targetViewAngle * 0.5f)
+                return false;
+        }
+
+        return !Physics.Linecast(from, to, visionObstacleMask, QueryTriggerInteraction.Ignore);
+    }
+
     private void UpdateTrackedTargetVelocity()
     {
         if (target == null)
@@ -417,5 +556,23 @@ public class RobberBrain : MonoBehaviour
         debugHideRawDestination = Vector3.zero;
         debugHideSampledDestination = Vector3.zero;
         debugHideHasValidDestination = false;
+    }
+
+    public void SetComplexDebugData(bool canSeeTarget, bool canTargetSeeMe, bool isTargetInRange, string subStateName, float defensiveLockTimer)
+    {
+        debugComplexCanSeeTarget = canSeeTarget;
+        debugComplexCanTargetSeeMe = canTargetSeeMe;
+        debugComplexIsTargetInRange = isTargetInRange;
+        debugComplexSubStateName = subStateName;
+        debugComplexDefensiveLockTimer = defensiveLockTimer;
+    }
+
+    public void ClearComplexDebugData()
+    {
+        debugComplexCanSeeTarget = false;
+        debugComplexCanTargetSeeMe = false;
+        debugComplexIsTargetInRange = false;
+        debugComplexSubStateName = string.Empty;
+        debugComplexDefensiveLockTimer = 0f;
     }
 }
