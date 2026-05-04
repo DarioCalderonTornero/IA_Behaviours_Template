@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
         victoryPanel.SetActive(false);
         UpdateCounter();
     }
-
+    
     public void PaintingStolen()
     {
         stolenPaintings++;
