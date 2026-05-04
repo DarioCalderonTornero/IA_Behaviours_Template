@@ -2223,11 +2223,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6631964419132099031}
-  - component: {fileID: 727603738}
-  - component: {fileID: 727603736}
+  - component: {fileID: 7694376107245879839}
+  - component: {fileID: 8843019995985734347}
+  - component: {fileID: 6316277897542072729}
   m_Layer: 0
   m_Name: Cop
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2248,30 +2249,29 @@ Transform:
   - {fileID: 8753657183144468797}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &727603738
-CapsuleCollider:
+--- !u!195 &7694376107245879839
+NavMeshAgent:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6644603938449114179}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &727603736
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &8843019995985734347
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2280,12 +2280,37 @@ MonoBehaviour:
   m_GameObject: {fileID: 6644603938449114179}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8252f08ac0b234ec99bccd94ec15a342, type: 3}
+  m_Script: {fileID: 11500000, guid: 29954299b5008d84f9d6ab5336176200, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 10
-  rotationSpeed: 100
-  currentSpeed: 0
+  m_EditorClassIdentifier: Assembly-CSharp::GuardSenses
+  viewRange: 10
+  viewAngle: 90
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  playerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  hearRange: 4
+--- !u!114 &6316277897542072729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6644603938449114179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c59b9874a653a4799cfaf32243673b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GuardFSM
+  waypoints: []
+  player: {fileID: 0}
+  agent: {fileID: 0}
+  senses: {fileID: 0}
+  investigationPoint: {x: 0, y: 0, z: 0}
+  showDebugInfo: 1
+  currentStateName: None
 --- !u!1 &6869289770107773416
 GameObject:
   m_ObjectHideFlags: 0
@@ -2624,6 +2649,7 @@ GameObject:
   - component: {fileID: 1878865841875949009}
   - component: {fileID: 6976261012401070727}
   - component: {fileID: 657092403018706496}
+  - component: {fileID: 2087025399995059880}
   m_Layer: 0
   m_Name: Body
   m_TagString: Untagged
@@ -2702,6 +2728,29 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!136 &2087025399995059880
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8773550726923644124}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8879404585736662953
 GameObject:
   m_ObjectHideFlags: 0
