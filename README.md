@@ -1,208 +1,201 @@
-# 🕵️ Robber AI – Unity (State Machine + NavMesh)
+# 🎨 Museum Heist — Unity 6 3D
 
-## 📌 Descripción general
-Este proyecto implementa una **IA de ladrón** en Unity utilizando una **máquina de estados finita (FSM)** combinada con **NavMesh** para navegación.
+## ¿Cómo se juega?
 
-El objetivo es simular un comportamiento creíble donde el ladrón:
-- Deambula por el escenario
-- Persigue al jugador cuando le conviene
-- Huye cuando está en peligro
-- Se esconde usando obstáculos reales
-- Toma decisiones inteligentes combinando todos los comportamientos
+Eres un ladrón que debe robar todos los cuadros de un museo sin ser atrapado por el guardia de seguridad.
 
----
-
-## 🧠 Arquitectura
-
-La IA está basada en una **máquina de estados modular**, donde cada comportamiento está separado en su propio script.
-
-### Componentes principales
-
-- `RobberBrain` → controlador central de la IA
-- `StateMachine` → gestiona los estados
-- `RobberState` → clase base de todos los estados
-- Estados concretos:
-  - `RobberWanderState`
-  - `RobberPursueState`
-  - `RobberEvadeState`
-  - `RobberHideState`
-  - `RobberComplexState`
-
-### Ventajas de esta arquitectura
-- Código modular y reutilizable
-- Fácil de extender
-- Separación clara de responsabilidades
-- Permite depuración visual por estado
+- Muévete por el museo con **WASD**
+- Corre con **Shift**
+- Al acercarte a un cuadro pulsa **X** para robarlo
+- Roba todos los cuadros para **ganar**
+- Si el guardia te atrapa, **pierdes**
 
 ---
 
-## 🤖 Estados implementados
+## 🗂️ Estructura de scripts
 
-### 1. 🟢 Wander (Deambular)
-- Movimiento aleatorio usando NavMesh
-- Generación de puntos con jitter
-- Evita quedarse bloqueado en bordes
-
-👉 Tecla: `R`
-
----
-
-### 2. 🔴 Pursue (Perseguir)
-- Persigue al objetivo
-- Usa **predicción de movimiento** basada en la velocidad del target
-- Recalcula destino periódicamente
-
-👉 Tecla: `P`
-
----
-
-### 3. 🟠 Evade (Huir)
-- Se aleja del target
-- También usa **predicción**
-- Prueba múltiples direcciones para evitar quedarse atrapado
-
-👉 Tecla: `E`
+```
+Assets/
+├── IGuardState.cs
+├── GuardFSM.cs
+├── GuardSenses.cs
+├── PatrolState.cs
+├── ListenState.cs
+├── InvestigateState.cs
+├── ChaseState.cs
+├── CaughtState.cs
+├── ThiefController.cs
+├── PaintingInteract.cs
+└── GameManager.cs
+```
 
 ---
 
-### 4. 🔵 Hide (Esconderse)
-- Busca obstáculos en la escena
-- Calcula una posición detrás del obstáculo respecto al enemigo
-- Verifica ocultación con raycast
+## 🧠 FSM del Guardia
 
-👉 Tecla: `H`
+```
+                    ┌─────────────────────────────────┐
+                    │                                 │
+              [oye ruido]                    [pierde al ladrón]
+                    │                                 │
+[PATRULLAR] ──────►[ESCUCHAR]──[ve al ladrón]──►[PERSEGUIR]
+    ▲                  │                              │
+    │            [llega al punto]                     │
+    │                  ▼                         [pierde vista]
+    └────────────[INVESTIGAR]◄────────────────────────┘
+                       │
+                 [tiempo agotado]
+                       │
+                 vuelve a PATRULLAR
+```
 
----
+### Estados
 
-### 5. 🧩 Complex (Comportamiento inteligente)
-Combina todos los estados anteriores:
-
-- **Lejos del target** → Wander  
-- **Cerca y no lo ve** → Pursue  
-- **El target lo ve** → Hide / Evade  
-- Usa memoria temporal para evitar cambios bruscos
-
-👉 Tecla: `C`
-
----
-
-## 👁️ Sistema de percepción
-
-Se implementan funciones clave:
-
-- `CanSeeTarget()`
-- `CanTargetSeeMe()`
-- `IsTargetInRange()`
-
-### Características:
-- Campo de visión (ángulo + distancia)
-- Raycast para comprobar visibilidad real
-- Altura de ojos configurable
+| Estado | Comportamiento |
+|---|---|
+| **Patrol** | Recorre waypoints en bucle por el museo |
+| **Listen** | Para, gira hacia el ruido, espera 2s y va a investigar |
+| **Investigate** | Corre al punto sospechoso, mira alrededor 4s y vuelve a patrullar |
+| **Chase** | Persigue al ladrón a máxima velocidad |
+| **Caught** | Avisa al GameManager y termina la partida |
 
 ---
 
-## 🧭 Navegación
+## 📋 Scripts — Descripción y Setup
 
-Se utiliza:
-- `NavMesh`
-- `NavMeshAgent`
-
-### Características:
-- Pathfinding automático
-- Repath inteligente
-- Validación de rutas completas
+### `IGuardState.cs`
+Interfaz base de la FSM. Define `Enter`, `Update` y `Exit`.
+> No va en ningún GameObject.
 
 ---
 
-## 🧪 Debug visual
+### `GuardFSM.cs`
+Cerebro de la FSM. Gestiona el estado actual y las transiciones.
+> Va en el **Guard**.
 
-Se ha implementado un sistema de debug (`RobberDebugView`) que permite visualizar:
-
-- Estados activos
-- Destinos del agente
-- Predicciones
-- Líneas de visión
-- Obstáculos usados para esconderse
-- Path del NavMesh
-
-Esto facilita:
-- Ajuste de parámetros
-- Detección de errores
-- Explicación del comportamiento
+| Campo | Valor |
+|---|---|
+| `waypoints` | Array de GameObjects vacíos por el museo |
+| `player` | GameObject del ladrón |
+| `showDebugInfo` | `true` durante desarrollo |
 
 ---
 
-## 🧱 Configuración de escena
+### `GuardSenses.cs`
+Gestiona la vista (raycast con cono) y el oído (overlap esférico) del guardia.
+> Va en el **Guard** (se añade automáticamente por `RequireComponent`).
 
-Para que la IA funcione correctamente:
+| Campo | Valor |
+|---|---|
+| `viewRange` | `10` |
+| `viewAngle` | `90` |
+| `obstacleMask` | Layer `Walls` |
+| `playerMask` | Layer `Player` |
+| `hearRange` | `4` |
 
-### Ladrón
-- `NavMeshAgent`
-- `RobberBrain`
-- `RobberDebugView`
+---
 
-### Policía (target)
-- Transform válido
-- Forward correctamente orientado
+### `PatrolState.cs`
+El guardia recorre los waypoints en bucle. Transiciona a `ListenState` si oye al ladrón o a `ChaseState` si lo ve.
+> No va en ningún GameObject.
 
-### Obstáculos
-- Collider (NO trigger)
-- Tag: `HideObstacle`
-- Layer incluida en:
-  - `HideObstacleMask`
-  - `VisionObstacleMask`
+---
+
+### `ListenState.cs`
+El guardia para y gira hacia el punto de ruido. Tras 2 segundos transiciona a `InvestigateState`.
+> No va en ningún GameObject.
+
+---
+
+### `InvestigateState.cs`
+El guardia corre al punto sospechoso. Al llegar mira alrededor durante 4 segundos y vuelve a `PatrolState`.
+> No va en ningún GameObject.
+
+---
+
+### `ChaseState.cs`
+El guardia persigue al ladrón a máxima velocidad. Si lo pierde de vista durante 2 segundos va a `InvestigateState`. Si lo alcanza (menos de 1m) transiciona a `CaughtState`.
+> No va en ningún GameObject.
+
+---
+
+### `CaughtState.cs`
+Para al guardia y llama a `GameManager.Instance.GameOver()`.
+> No va en ningún GameObject.
+
+---
+
+### `ThiefController.cs`
+Controla el movimiento del ladrón en top-down. WASD para moverse, Shift para correr. El personaje rota automáticamente hacia la dirección de movimiento.
+> Va en el **ladrón**.
+
+| Campo | Valor |
+|---|---|
+| `walkSpeed` | `4` |
+| `runSpeed` | `7` |
+
+Componentes necesarios en el ladrón:
+
+| Componente | Configuración |
+|---|---|
+| `Rigidbody` | `Is Kinematic = false`, congelar rotaciones X y Z |
+| `CapsuleCollider` | `Is Trigger = false` |
+| Tag | `Player` |
+
+---
+
+### `PaintingInteract.cs`
+Detecta cuando el ladrón entra en el trigger del cuadro. Al pulsar X llama a `GameManager.PaintingStolen()` y desactiva el cuadro.
+> Va en **cada cuadro**.
+
+| Componente | Configuración |
+|---|---|
+| `BoxCollider` | `Is Trigger = true` |
+
+---
+
+### `GameManager.cs`
+Singleton que gestiona el contador de cuadros, la condición de victoria y la condición de derrota. Controla los paneles de UI y el `Time.timeScale`.
+> Va en un **GameObject vacío** llamado `GameManager`.
+
+| Campo | Valor |
+|---|---|
+| `totalPaintings` | Número de cuadros en escena |
+| `gameOverPanel` | Panel UI de derrota |
+| `victoryPanel` | Panel UI de victoria |
+| `paintingCounterText` | TextMeshPro del HUD |
+
+---
+
+## 🗺️ Setup de escena
+
+### Layers
+Crear en **Edit → Project Settings → Tags and Layers**:
+
+| Layer | Asignar a |
+|---|---|
+| `Walls` | Todos los muros del laberinto |
+| `Player` | El ladrón |
+
+### Waypoints
+Crear GameObjects vacíos `WP_01`, `WP_02`... dentro del museo y arrastrarlos al array `waypoints` del `GuardFSM`.
 
 ### NavMesh
-- Correctamente horneado
-- Sin huecos inesperados
+```
+1. Seleccionar suelo y paredes → marcar Static en Inspector
+2. Window → AI → Navigation → Bake
+3. Verificar que el área azul cubre el suelo del museo
+4. En NavMeshAgent del guardia: Is Kinematic = true en Rigidbody
+5. Ajustar Base Offset si el guardia se hunde en el suelo
+```
 
----
+### UI (Canvas)
+| Elemento | Contenido |
+|---|---|
+| `GameOverPanel` | Texto "HAS SIDO ATRAPADO" + botón `RestartScene()` + botón `QuitGame()` |
+| `VictoryPanel` | Texto "¡HAS ESCAPADO!" + botón `RestartScene()` |
+| `PaintingCounterText` | TextMeshPro visible en esquina, muestra `Cuadros: X / Y` |
 
-## ⚙️ Controles
-
-| Tecla | Estado |
-|------|--------|
-| R | Wander |
-| P | Pursue |
-| E | Evade |
-| H | Hide |
-| C | Complex |
-
----
-
-## 🎯 Objetivos cumplidos
-
-✔ Máquina de estados modular  
-✔ Navegación con NavMesh  
-✔ Persecución con predicción  
-✔ Huida inteligente  
-✔ Sistema de escondite con obstáculos reales  
-✔ Sistema de percepción (visión)  
-✔ Estado complejo con toma de decisiones  
-✔ Debug visual completo  
-
----
-
-## 🚀 Posibles mejoras
-
-- Animaciones (Animator)
-- Sistema de sonido/percepción auditiva
-- Behavior Trees en lugar de FSM
-- IA multi-agente
-- Sistema de memoria más avanzado
-
----
-
-## 📌 Conclusión
-
-El proyecto demuestra cómo implementar una IA completa en Unity combinando:
-
-- Máquina de estados
-- Navegación
-- Percepción
-- Toma de decisiones
-
-El resultado es un agente que responde de forma creíble al entorno y al jugador.
-
----
-
+Los botones en **OnClick()** apuntan al GameObject `GameManager`:
+- Reintentar → `GameManager.RestartScene`
+- Salir → `GameManager.QuitGame`
